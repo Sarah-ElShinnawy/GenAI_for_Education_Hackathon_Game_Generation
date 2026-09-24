@@ -58,7 +58,16 @@ export function getGeminiClient(role: 'primary' | 'planner' | 'coder' = 'primary
  * Defaults to 'gemini-flash-lite-latest' for high-throughput, low-latency, and zero daily quota locks.
  */
 export function getPrimaryModel(): string {
-  return process.env.GEMINI_MODEL || 'gemini-flash-lite-latest';
+  const envModel = process.env.GEMINI_MODEL?.trim();
+  if (
+    !envModel ||
+    envModel === 'gemini-3.5-flash-lite' ||
+    envModel === 'gemini-2.5-flash-lite' ||
+    envModel === 'gemini-2.0-flash'
+  ) {
+    return 'gemini-flash-lite-latest';
+  }
+  return envModel;
 }
 
 /**
@@ -105,8 +114,8 @@ export async function generateContentResiliently(
   const primary = options.model || getPrimaryModel();
   const candidateModels = Array.from(
     new Set([
-      primary,
       'gemini-flash-lite-latest',
+      primary,
       'gemini-2.5-flash',
       'gemini-3.6-flash',
       'gemini-3.5-flash-lite',
