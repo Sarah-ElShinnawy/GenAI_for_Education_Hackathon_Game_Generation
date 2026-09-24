@@ -78,6 +78,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateG
     const client = getGeminiClient('coder');
     const primaryModel = getPrimaryModel();
 
+    // University-level prompts produce ~20-25 KB HTML. With a tighter per-call timeout
+    // each model attempt fails faster, leaving budget for one cascade fallback within 60s.
+    const isUniversity = level === 'university';
+    const callTimeoutMs = isUniversity ? 20000 : 32000;
+
     // 3. Synthesize Master Game in a single resilient pass (~12-16s)
     const prompt = buildUserPrompt(topic, level, userIntent);
 
@@ -89,7 +94,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateG
         systemInstruction: MASTER_SYSTEM_PROMPT,
         responseMimeType: 'application/json',
         temperature: 0.7,
-        timeoutMs: 32000,
+        timeoutMs: callTimeoutMs,
       });
 
       rawAiText = result.text;
@@ -128,7 +133,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateG
     let finalHtml = qaReport.sanitizedHtml;
 
     // 6. Automated Self-Healing QA Repair Loop (only if syntax/execution fails)
-    if (!qaReport.passed) {
+    // Skipped for University level — repair adds 20-30s which would exceed Vercel's 60s maxDuration.
+    if (!qaReport.passed && !isUniversity) {
       const errorSummary = qaReport.errors.join('; ');
       console.warn(
         `Automated QA verifier detected code issues: "${errorSummary}". Dispatching repair agent...`

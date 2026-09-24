@@ -158,9 +158,25 @@ Return the result strictly as a JSON object with this exact shape:
 }
 
 /**
- * Legacy/direct user prompt builder (used as fallback or direct generation).
+ * Builds the user prompt for direct single-pass game generation.
+ * University level gets a compact, canvas-friendly variant to stay within model response budgets.
  */
 export function buildUserPrompt(topic: string, level: GameLevel, userIntent?: string): string {
+  const isUniversity = level === 'university';
+
+  const renderingRequirements = isUniversity
+    ? `4. EFFICIENT RENDERING (CANVAS OR SVG — YOUR CHOICE):
+   Use <canvas> or minimal inline <svg> for visualizations. Prioritize mathematical clarity and simulation accuracy over visual polish.
+   Avoid large multi-path SVG illustrations. Use simple shapes with labels instead of elaborate character art.
+   Focus on data-driven visuals: graphs, state machines, network diagrams, or algorithm visualizations.`
+    : `4. RICH STANDALONE SVG ASSETS (NO CRUDE CANVAS CIRCLES):
+   Characters, items, and environment must be rendered as clean inline <svg viewBox="..."> elements with <linearGradient> and paths in the HTML markup.
+   Every character, plant, tool, or machine must be a multi-layered SVG with curves, gradients, and expressive detail — not a plain geometric shape.`;
+
+  const lineBudget = isUniversity
+    ? `8. COMPACT & EFFICIENT: Target ≤ 250 lines of HTML+CSS+JS total. Use concise, modular code. University-level games must prioritize computational correctness over decorative complexity.`
+    : `8. COMPACT & CLEAN: Keep code modular and clean, targeting ≤ 380 lines.`;
+
   return `
 Create a complete, single-file HTML5 playable educational game on the topic: "${topic}".
 Target Educational Level: ${level}.
@@ -172,14 +188,13 @@ NON-NEGOTIABLE ARCHITECTURAL REQUIREMENTS:
 3. 5-SECOND "WHAT CHANGED?" TRANSITION MODAL:
    When each stage is solved, display a transition modal explaining the science/logic of what changed.
    The continue button must show a 5-second countdown timer ("Continue (5s)", "Continue (4s)", etc.) and remain disabled until the 5 seconds finish.
-4. RICH STANDALONE SVG ASSETS (NO CRUDE CANVAS CIRCLES):
-   Characters, items, and environment must be rendered as clean inline <svg viewBox="..."> elements with <linearGradient> and paths in the HTML markup.
+${renderingRequirements}
 5. BULLETPROOF START OVERLAY:
    Include <div id="start-overlay"><button id="start-btn" onclick="startGame()">Start Playing ➔</button></div>.
    function startGame() must resume Web Audio AudioContext and begin stage 1.
 6. EXPLANATORY ON-SCREEN MENTOR: Dialogue box with mentor name/emoji explaining the concept and giving feedback.
 7. PROGRAMMATIC WEB AUDIO: Generate sound effects with AudioContext oscillators.
-8. COMPACT & CLEAN: Keep code modular, clean, and under 380 lines.
+${lineBudget}
 
 Return strictly valid JSON with this exact shape:
 {

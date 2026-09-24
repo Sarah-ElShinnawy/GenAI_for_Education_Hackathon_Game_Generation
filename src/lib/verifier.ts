@@ -128,11 +128,11 @@ export function verifyGameCode(rawHtml: string): VerificationReport {
     warnings.push('Could not find a dedicated "What Changed?" transition modal in the HTML structure.');
   }
 
-  // 8. Standalone SVG Illustrations Enforcement
+  // 8. Standalone SVG Illustrations Check (warning only — canvas-based University games are valid)
   const svgMatches = sanitizedHtml.match(/<svg[\s>]/gi) || [];
   if (svgMatches.length === 0) {
-    errors.push(
-      'Game must contain rich standalone <svg> vector illustrations for characters, items, and environment (found 0 <svg> tags). Bare canvas primitive circles/arcs are strictly forbidden!'
+    warnings.push(
+      'No standalone <svg> vector illustrations found. If this is a canvas-based simulation, this is acceptable. Otherwise, consider adding SVG character assets for visual richness.'
     );
   } else {
     testedFunctions.push(`Rich Standalone SVG Assets Verified (${svgMatches.length} <svg> illustrations present)`);
