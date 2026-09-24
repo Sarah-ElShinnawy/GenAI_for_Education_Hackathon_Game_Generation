@@ -160,24 +160,40 @@ Return the result strictly as a JSON object with this exact shape:
 /**
  * Legacy/direct user prompt builder (used as fallback or direct generation).
  */
-export function buildUserPrompt(topic: string, level: GameLevel): string {
+export function buildUserPrompt(topic: string, level: GameLevel, userIntent?: string): string {
   return `
-Create a complete, full-page immersive (100vw x 100vh), highly explanatory, forgiving, single-file HTML5 educational game on the topic: "${topic}".
+Create a complete, single-file HTML5 playable educational game on the topic: "${topic}".
 Target Educational Level: ${level}.
+${userIntent ? `Pedagogical Focus: ${userIntent}` : ''}
 
-Requirements:
-1. FULL PAGE: Occupies 100vw and 100vh. NO small 800px box.
-2. NO PRE-SOLVED DEFAULTS: Starting parameters must be offset so player must actively think and experiment.
-3. Include an on-screen friendly mentor companion that explains the science/concept clearly at each step.
-4. Keep mechanics accessible, intuitive, and zero-frustration (no punishing timers or instant game-overs).
-5. Provide 2 to 4 concise educational takeaways taught through gameplay.
-6. Provide the complete executable HTML5 single-file code adhering to all 7 non-negotiable constraints.
+NON-NEGOTIABLE ARCHITECTURAL REQUIREMENTS:
+1. FULL PAGE IMMERSIVE (100vw x 100vh): html, body must occupy 100% viewport width and height with dark modern theme (#0f172a, #f8fafc).
+2. ACTIVE UNSOLVED STARTING STATE: Starting variables, sliders, or pieces must be offset/unsolved so the student must actively interact and think.
+3. 5-SECOND "WHAT CHANGED?" TRANSITION MODAL:
+   When each stage is solved, display a transition modal explaining the science/logic of what changed.
+   The continue button must show a 5-second countdown timer ("Continue (5s)", "Continue (4s)", etc.) and remain disabled until the 5 seconds finish.
+4. RICH STANDALONE SVG ASSETS (NO CRUDE CANVAS CIRCLES):
+   Characters, items, and environment must be rendered as clean inline <svg viewBox="..."> elements with <linearGradient> and paths in the HTML markup.
+5. BULLETPROOF START OVERLAY:
+   Include <div id="start-overlay"><button id="start-btn" onclick="startGame()">Start Playing ➔</button></div>.
+   function startGame() must resume Web Audio AudioContext and begin stage 1.
+6. EXPLANATORY ON-SCREEN MENTOR: Dialogue box with mentor name/emoji explaining the concept and giving feedback.
+7. PROGRAMMATIC WEB AUDIO: Generate sound effects with AudioContext oscillators.
+8. COMPACT & CLEAN: Keep code modular, clean, and under 380 lines.
 
-Return the result strictly as a JSON object with this exact shape:
+Return strictly valid JSON with this exact shape:
 {
-  "title": "string (engaging, catchy title)",
-  "takeaways": ["concept 1", "concept 2", "..."],
-  "html": "<!DOCTYPE html><html>...</html>"
+  "title": "Engaging title for ${topic}",
+  "takeaways": [
+    "Key educational takeaway 1",
+    "Key educational takeaway 2",
+    "Key educational takeaway 3"
+  ],
+  "objectives": [
+    { "label": "Master core concept of ${topic}", "done": false },
+    { "label": "Complete all interactive stages", "done": false }
+  ],
+  "html": "<!DOCTYPE html><html>...full executable HTML5 code...</html>"
 }
 `.trim();
 }
