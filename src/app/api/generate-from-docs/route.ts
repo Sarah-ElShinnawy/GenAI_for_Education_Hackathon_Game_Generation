@@ -23,6 +23,7 @@ import { repairGameHtml } from '@/lib/repair';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 const MAX_DOC_COUNT = 10;
 const MAX_TOTAL_SIZE_BYTES = 40 * 1024 * 1024; // 40MB total

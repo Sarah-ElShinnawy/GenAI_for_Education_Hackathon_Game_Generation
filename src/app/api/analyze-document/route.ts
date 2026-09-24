@@ -5,6 +5,7 @@ import { stripMarkdown } from '@/lib/sanitizer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
