@@ -112,6 +112,7 @@ Return strictly a JSON object with this exact shape:
       systemInstruction: PLANNER_SYSTEM_PROMPT,
       responseMimeType: 'application/json',
       temperature: 0.5,
+      timeoutMs: 15000,
     });
 
     const parsed = JSON.parse(stripMarkdown(text));

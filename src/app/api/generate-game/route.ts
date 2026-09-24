@@ -93,7 +93,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateG
         contents: codePrompt,
         systemInstruction: MASTER_SYSTEM_PROMPT,
         responseMimeType: 'application/json',
-        responseSchema: GAME_RESPONSE_SCHEMA,
         temperature: 0.7,
       });
 

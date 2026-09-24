@@ -55,39 +55,48 @@ export function getGeminiClient(role: 'primary' | 'planner' | 'coder' = 'primary
 
 /**
  * Returns the primary model name to use for generation.
- * Defaults to 'gemini-3.5-flash-lite' for ultra-fast, high-throughput, zero-bottleneck generation.
+ * Defaults to 'gemini-flash-lite-latest' for high-throughput, low-latency, and zero daily quota locks.
  */
 export function getPrimaryModel(): string {
-  return process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+  return process.env.GEMINI_MODEL || 'gemini-flash-lite-latest';
 }
 
 /**
  * Returns the fallback model for recovery loops.
  */
 export function getFallbackModel(): string {
-  return 'gemini-2.5-flash';
+  return 'gemini-3.6-flash';
 }
 
 export interface ResilientGenerateOptions {
-  contents: string;
+  contents: any;
   systemInstruction?: string;
   responseMimeType?: string;
   responseSchema?: Record<string, unknown>;
   temperature?: number;
   model?: string;
+  timeoutMs?: number;
 }
 
 /**
- * Helper to delay execution for exponential backoff.
+ * Helper to wrap any promise with a strict timeout rejection.
  */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function withTimeout<T>(promise: Promise<T>, ms: number, timeoutMsg: string): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(timeoutMsg));
+    }, ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timer);
+  });
 }
 
 /**
- * Calls Gemini with automatic exponential backoff retry and model fallback cascade
- * (e.g. gemini-3.8-flash -> gemini-2.5-flash -> gemini-2.0-flash) when encountering
- * transient high-demand (503) or rate-limit (429) errors.
+ * Calls Gemini with automatic fast per-call timeout and model fallback cascade
+ * (gemini-flash-lite-latest -> gemini-2.5-flash -> gemini-3.6-flash -> gemini-3.5-flash-lite)
+ * when encountering timeouts, transient high-demand (503), rate-limit (429), or busy servers.
  */
 export async function generateContentResiliently(
   client: GoogleGenAI,
@@ -95,55 +104,63 @@ export async function generateContentResiliently(
 ): Promise<{ text: string; modelUsed: string }> {
   const primary = options.model || getPrimaryModel();
   const candidateModels = Array.from(
-    new Set([primary, 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'])
+    new Set([
+      primary,
+      'gemini-flash-lite-latest',
+      'gemini-2.5-flash',
+      'gemini-3.6-flash',
+      'gemini-3.5-flash-lite',
+    ])
   );
 
+  // Per-call timeout: 32s default allows full HTML code synthesis (typically ~20-24s) to complete
+  const callTimeoutMs = options.timeoutMs || 32000;
   let lastError: unknown = null;
 
   for (const model of candidateModels) {
-    const maxAttempts = 2;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const config: Record<string, unknown> = {};
-        if (options.systemInstruction) config.systemInstruction = options.systemInstruction;
-        if (options.responseMimeType) config.responseMimeType = options.responseMimeType;
-        if (options.responseSchema) config.responseSchema = options.responseSchema;
-        if (typeof options.temperature === 'number') config.temperature = options.temperature;
+    try {
+      console.log(`[GeminiCascade] Invoking model "${model}" (timeout: ${callTimeoutMs / 1000}s)...`);
+      const config: Record<string, unknown> = {};
+      if (options.systemInstruction) config.systemInstruction = options.systemInstruction;
+      if (options.responseMimeType) config.responseMimeType = options.responseMimeType;
+      if (options.responseSchema) config.responseSchema = options.responseSchema;
+      if (typeof options.temperature === 'number') config.temperature = options.temperature;
 
-        const response = await client.models.generateContent({
-          model,
-          contents: options.contents,
-          config,
-        });
-
-        return {
-          text: response.text || '',
-          modelUsed: model,
-        };
-      } catch (err: unknown) {
-        lastError = err;
-        const errString = String(err);
-        const isTransient =
-          errString.includes('503') ||
-          errString.includes('high demand') ||
-          errString.includes('UNAVAILABLE') ||
-          errString.includes('429') ||
-          errString.includes('RESOURCE_EXHAUSTED');
-
-        if (isTransient && attempt < maxAttempts) {
-          const waitTime = attempt * 1500;
-          console.warn(
-            `Model ${model} experienced temporary demand spike (attempt ${attempt}/${maxAttempts}). Retrying in ${waitTime}ms...`
-          );
-          await sleep(waitTime);
-          continue;
-        }
-
-        console.warn(
-          `Model ${model} request did not succeed. Cascading to next available model... Error: ${errString}`
-        );
-        break; // break inner loop to try next candidate model
+      // Disable extended reasoning thinkingBudget on 2.5-flash to avoid 50s reasoning delays.
+      // Do NOT pass thinkingConfig to flash-lite models as it triggers 400 INVALID_ARGUMENT.
+      if (model.includes('2.5-flash') && !model.includes('lite')) {
+        config.thinkingConfig = { thinkingBudget: 0 };
       }
+
+      const responsePromise = client.models.generateContent({
+        model,
+        contents: options.contents,
+        config,
+      });
+
+      const response = await withTimeout(
+        responsePromise,
+        callTimeoutMs,
+        `Model ${model} timed out after ${callTimeoutMs / 1000}s without responding.`
+      );
+
+      if (!response.text || response.text.trim() === '') {
+        throw new Error(`Model ${model} returned empty content.`);
+      }
+
+      console.log(`[GeminiCascade] Successfully received response from model "${model}".`);
+      return {
+        text: response.text,
+        modelUsed: model,
+      };
+    } catch (err: unknown) {
+      lastError = err;
+      const errString = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `[GeminiCascade] Model "${model}" failed or timed out (${errString}). Cascading to next fallback model...`
+      );
+      // Immediately cascade to next candidate model in the list
+      continue;
     }
   }
 

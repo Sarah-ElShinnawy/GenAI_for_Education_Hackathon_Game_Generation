@@ -122,7 +122,19 @@ export default function App() {
           body: formData,
         });
 
-        const data = await res.json();
+        let data;
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          data = await res.json();
+        } else {
+          const rawText = await res.text();
+          throw new Error(
+            res.status === 504
+              ? 'Serverless invocation timed out. Please retry with a concise prompt.'
+              : `Server error (${res.status}): ${rawText.slice(0, 150)}`
+          );
+        }
+
         if (!res.ok || data.status === 'error') {
           throw new Error(data.message || 'Failed to generate game from document.');
         }
@@ -151,7 +163,19 @@ export default function App() {
           }),
         });
 
-        const data = await res.json();
+        let data;
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          data = await res.json();
+        } else {
+          const rawText = await res.text();
+          throw new Error(
+            res.status === 504
+              ? 'Serverless invocation timed out. The system has automatically shifted to faster fallback models, please try again.'
+              : `Server error (${res.status}): ${rawText.slice(0, 150)}`
+          );
+        }
+
         if (!res.ok || data.status === 'error') {
           throw new Error(data.message || 'Game generation failed.');
         }
