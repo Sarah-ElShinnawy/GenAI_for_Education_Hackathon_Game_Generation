@@ -17,6 +17,7 @@ import { generatePedagogicalBlueprint } from '@/lib/planner';
 import { parseGameOutput } from '@/lib/sanitizer';
 import { verifyGameCode } from '@/lib/verifier';
 import { repairGameHtml } from '@/lib/repair';
+import { patchGameButtons } from '@/lib/patcher';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -132,7 +133,18 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateG
     let qaReport = verifyGameCode(structuredOutput.html);
     let finalHtml = qaReport.sanitizedHtml;
 
-    // 6. Automated Self-Healing QA Repair Loop (only if syntax/execution fails)
+    // 6a. Zero-cost Button Patcher — runs for ALL levels (no API call, ~0ms).
+    // Injects missing startGame(), showInstructions(), restartGame() stubs when
+    // onclick attributes reference functions that aren't defined in the JS.
+    // Also auto-injects #instructions-modal if it's missing.
+    finalHtml = patchGameButtons(finalHtml);
+
+    // Re-run QA on patched HTML so repair loop has accurate error list
+    if (!qaReport.passed) {
+      qaReport = verifyGameCode(finalHtml);
+    }
+
+    // 6b. Automated Self-Healing QA Repair Loop (AI call — skipped for University to stay under 60s budget)
     // Skipped for University level — repair adds 20-30s which would exceed Vercel's 60s maxDuration.
     if (!qaReport.passed && !isUniversity) {
       const errorSummary = qaReport.errors.join('; ');
@@ -142,7 +154,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateG
 
       const repairResult = await repairGameHtml(
         client,
-        structuredOutput.html,
+        finalHtml,
         errorSummary
       );
 
