@@ -53,9 +53,11 @@ Every game you generate must strictly adhere to the following core laws:
    - Place these rich SVG assets inside the full-page #game-container (using absolute positioning, flexbox, or grid) and manipulate their positions/animations using JavaScript (e.g. element.style.left, element.style.transform, or CSS transitions).
    - This ensures the game looks like a professionally illustrated, modern educational app (like PhET, Brilliant, or Duolingo) rather than crude geometric programmer art!
 
-5. BULLETPROOF "START GAME" & AUDIO INITIALIZATION:
-   - Provide an initial overlay #start-overlay with a prominent "Start Game" button: <button id="start-btn" onclick="startGame()">Start Playing ➔</button>.
-   - Define function startGame() globally at the top of your script:
+5. BULLETPROOF "START GAME" & AUDIO INITIALIZATION + "HOW TO PLAY" MODAL:
+   - Provide an initial overlay #start-overlay with TWO buttons side by side:
+     * Primary: <button id="start-btn" onclick="startGame()">Start Playing ➔</button>
+     * Secondary: <button id="how-to-play-btn" onclick="showInstructions()">How to Play</button>
+   - Define function startGame() globally:
      function startGame() {
        initAudio();
        const overlay = document.getElementById('start-overlay');
@@ -63,8 +65,18 @@ Every game you generate must strictly adhere to the following core laws:
        loadStage(1);
      }
      window.startGame = startGame;
-     document.getElementById('start-btn')?.addEventListener('click', startGame);
-   - Ensure the overlay cannot block interaction once dismissed.
+   - Define function showInstructions() globally. It must show a full-screen modal (#instructions-modal) with:
+     * 2-3 bullet points explaining the game objective and controls
+     * A close button: <button onclick="document.getElementById('instructions-modal').style.display='none'">Got it!</button>
+     * The modal must be SEPARATE from the start-overlay — it must work before AND after the game starts.
+     function showInstructions() {
+       const modal = document.getElementById('instructions-modal');
+       if (modal) modal.style.display = 'flex';
+     }
+     window.showInstructions = showInstructions;
+   - CRITICAL: Both onclick="startGame()" and onclick="showInstructions()" MUST have their corresponding
+     function definitions in the JavaScript. Missing function definitions cause silent broken buttons!
+   - Ensure the start-overlay and instructions-modal cannot block interaction once dismissed.
 
 6. EXPLANATORY PEDAGOGY & MENTOR COMPANION:
    - The game must actually EXPLAIN the science/concept clearly, so that any learner understands WHY things happen.
@@ -189,9 +201,14 @@ NON-NEGOTIABLE ARCHITECTURAL REQUIREMENTS:
    When each stage is solved, display a transition modal explaining the science/logic of what changed.
    The continue button must show a 5-second countdown timer ("Continue (5s)", "Continue (4s)", etc.) and remain disabled until the 5 seconds finish.
 ${renderingRequirements}
-5. BULLETPROOF START OVERLAY:
-   Include <div id="start-overlay"><button id="start-btn" onclick="startGame()">Start Playing ➔</button></div>.
-   function startGame() must resume Web Audio AudioContext and begin stage 1.
+5. BULLETPROOF START OVERLAY + "HOW TO PLAY" MODAL:
+   - The start overlay must have TWO buttons:
+     (a) <button id="start-btn" onclick="startGame()">Start Playing ➔</button>
+     (b) <button id="how-to-play-btn" onclick="showInstructions()">How to Play</button>
+   - Define function startGame() { ... resume AudioContext, hide overlay, begin stage 1 }
+   - Define function showInstructions() { document.getElementById('instructions-modal').style.display = 'flex'; }
+   - Both functions MUST be defined in the JS. Create a separate #instructions-modal that opens on showInstructions() and stays accessible even after the game starts.
+   - Add window.startGame = startGame; window.showInstructions = showInstructions; for onclick compatibility.
 6. EXPLANATORY ON-SCREEN MENTOR: Dialogue box with mentor name/emoji explaining the concept and giving feedback.
 7. PROGRAMMATIC WEB AUDIO: Generate sound effects with AudioContext oscillators.
 ${lineBudget}
