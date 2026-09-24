@@ -1,6 +1,6 @@
 import { Sparkles, Bot, ArrowRight, Zap, Presentation, Brain, ShieldCheck, Gamepad2, Layers, BookOpen, Star, Trophy, Target } from 'lucide-react';
 
-export default function HomePage({ onNavigateToAgent, onNavigateToAbout, onNavigateToContact }) {
+export default function HomePage({ onNavigateToAgent, onNavigateToAbout }) {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16 animate-fade-in relative z-10">
 
@@ -156,25 +156,6 @@ export default function HomePage({ onNavigateToAgent, onNavigateToAbout, onNavig
           </div>
 
         </div>
-      </div>
-
-      {/* ── Quick Contact & Support Callout ── */}
-      <div className="glass-card p-8 sm:p-10 rounded-3xl border border-[rgba(86,128,233,0.25)] flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl mb-12">
-        <div className="space-y-1 text-center sm:text-left">
-          <h3 className="font-pixel text-xl sm:text-2xl font-bold text-[#1e2440]">
-            Have feedback or school curriculum needs?
-          </h3>
-          <p className="text-xs sm:text-sm text-[#5e6b8c]">
-            Our education team responds within 24 hours to help teachers and students.
-          </p>
-        </div>
-        <button
-          onClick={onNavigateToContact}
-          className="btn-primary py-3.5 px-6 text-xs sm:text-sm font-pixel flex items-center gap-2 whitespace-nowrap shadow-md"
-        >
-          <span>Contact Our Team</span>
-          <ArrowRight size={14} />
-        </button>
       </div>
 
     </div>

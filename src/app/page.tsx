@@ -9,7 +9,6 @@ import GameStage from '@/components/GameStage';
 import HUDDrawer from '@/components/HUDDrawer';
 import HomePage from '@/components/HomePage';
 import AboutPage from '@/components/AboutPage';
-import ContactPage from '@/components/ContactPage';
 import DocumentSideViewer from '@/components/DocumentSideViewer';
 import GamingBackgroundDecorations from '@/components/GamingBackgroundDecorations';
 import { MOCK_GAME_HTML, MOCK_HUD, registerDocumentDetails } from '@/data/mockData';
@@ -44,7 +43,7 @@ export default function Page() {
     setIsDark((d) => !d);
   }, []);
 
-  // 4 Distinct Pages: 'home' | 'ai-agent' | 'about' | 'contact'
+  // 3 Distinct Pages: 'home' | 'ai-agent' | 'about'
   const [activePage, setActivePage] = useState('home');
   const [appState, setAppState] = useState('idle'); // 'idle' | 'loading' | 'playing' | 'error'
   const [gameHtml, setGameHtml] = useState('');
@@ -279,10 +278,6 @@ export default function Page() {
               setActivePage('about');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            onNavigateToContact={() => {
-              setActivePage('contact');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
           />
         )}
 
@@ -430,18 +425,6 @@ export default function Page() {
             }}
           />
         )}
-
-        {/* ═══════════════════════════════════════════════════════════════
-            PAGE 4: CONTACT (Dedicated Contact & Support Portal)
-            ═══════════════════════════════════════════════════════════════ */}
-        {activePage === 'contact' && (
-          <ContactPage
-            onBackToHome={() => {
-              setActivePage('home');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          />
-        )}
       </main>
 
       {/* ── Slide-Over AI Document Viewer (PDF & PPT) ── */}
@@ -496,15 +479,6 @@ export default function Page() {
               className="hover:text-[#5680E9] font-pixel transition-colors"
             >
               About Us
-            </button>
-            <button
-              onClick={() => {
-                setActivePage('contact');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="hover:text-[#5680E9] font-pixel transition-colors"
-            >
-              Contact
             </button>
           </div>
 

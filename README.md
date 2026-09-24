@@ -42,8 +42,8 @@
    - Real-time tracking of **Key Takeaways** and **Challenge Objectives**.
    - Automatically checks off milestones as students solve challenges in the sandboxed iframe.
 
-6. **Unified Database Layer (`/api/db/games` & `/api/contact`)**:
-   - Persistent storage for generated game suites, history, and contact inquiries.
+6. **Unified Database Layer (`/api/db/games`)**:
+   - Persistent storage for generated game suites, challenge milestones, and educational history.
    - Zero-crash architecture: works with Vercel Postgres / Neon when configured, with automatic serverless local storage fallback.
 
 ---

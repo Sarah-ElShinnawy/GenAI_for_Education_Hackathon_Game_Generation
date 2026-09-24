@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Gamepad2, Menu, X, ArrowRight, Sparkles, Home, Info, Mail, Bot, Sun, Moon } from 'lucide-react';
+import { Gamepad2, Menu, X, ArrowRight, Sparkles, Home, Info, Bot, Sun, Moon } from 'lucide-react';
 
 export default function Navbar({ activePage, onNavigate, onQuickPlay, isDark, onToggleTheme }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -8,7 +8,6 @@ export default function Navbar({ activePage, onNavigate, onQuickPlay, isDark, on
     { id: 'home',     label: 'HOME',     icon: Home },
     { id: 'ai-agent', label: 'AI Agent', icon: Bot },
     { id: 'about',    label: 'About Us', icon: Info },
-    { id: 'contact',  label: 'Contact',  icon: Mail },
   ];
 
   const handleNav = (id) => {

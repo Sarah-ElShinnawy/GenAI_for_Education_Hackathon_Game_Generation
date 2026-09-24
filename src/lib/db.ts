@@ -13,16 +13,6 @@ export interface StoredGame {
   createdAt: string;
 }
 
-export interface StoredContactMessage {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  subject: string;
-  message: string;
-  createdAt: string;
-}
-
 export interface StoredDocument {
   id: string;
   name: string;
@@ -33,14 +23,12 @@ export interface StoredDocument {
 
 interface DatabaseSchema {
   games: StoredGame[];
-  contactMessages: StoredContactMessage[];
   documents: StoredDocument[];
 }
 
 // In-memory cache + persistent file fallback for Vercel/Local
 let memoryDb: DatabaseSchema = {
   games: [],
-  contactMessages: [],
   documents: [],
 };
 
@@ -67,7 +55,6 @@ function loadDb(): DatabaseSchema {
       const parsed = JSON.parse(raw);
       memoryDb = {
         games: Array.isArray(parsed.games) ? parsed.games : [],
-        contactMessages: Array.isArray(parsed.contactMessages) ? parsed.contactMessages : [],
         documents: Array.isArray(parsed.documents) ? parsed.documents : [],
       };
     }
@@ -119,22 +106,4 @@ export async function getRecentGames(limit: number = 20): Promise<StoredGame[]> 
 export async function getGameById(id: string): Promise<StoredGame | null> {
   const db = loadDb();
   return db.games.find((g) => g.id === id) || null;
-}
-
-/**
- * Save contact inquiry to the database
- */
-export async function saveContactMessage(
-  data: Omit<StoredContactMessage, 'id' | 'createdAt'>
-): Promise<StoredContactMessage> {
-  const db = loadDb();
-  const msg: StoredContactMessage = {
-    ...data,
-    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    createdAt: new Date().toISOString(),
-  };
-
-  db.contactMessages.unshift(msg);
-  persistDb();
-  return msg;
 }
