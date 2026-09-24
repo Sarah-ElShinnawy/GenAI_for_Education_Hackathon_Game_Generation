@@ -42,15 +42,16 @@ export function stripMarkdown(raw: string): string {
 /**
  * Robustly parses AI response into structured game data.
  * Gracefully handles:
- * 1. Strict structured JSON schema
- * 2. Markdown-wrapped JSON
- * 3. Direct raw HTML generation (extracting title from <title> tag)
- * 4. Partially broken JSON with embedded multiline HTML strings
+ * 1. Strict structured JSON schema (with \n unescape and html content validation)
+ * 2. Direct raw HTML generation (extracting title from <title> tag)
+ * 3. Partially broken JSON with embedded multiline HTML strings (regex extraction)
  */
 export function parseGameOutput(rawText: string, fallbackTopic: string = 'Educational Concept'): RawAiGameOutput {
   const cleaned = stripMarkdown(rawText);
 
-  // Strategy 1: Attempt standard JSON parse
+  // ── Strategy 1: Standard JSON.parse ──────────────────────────────────────────
+  // After parsing, unescape literal \n sequences and validate the html field actually
+  // contains a real game (not truncated/empty whitespace). Falls through if html is missing.
   try {
     const parsed = JSON.parse(cleaned);
     if (parsed && typeof parsed === 'object') {
@@ -72,16 +73,38 @@ export function parseGameOutput(rawText: string, fallbackTopic: string = 'Educat
         ];
       }
 
-      const html = typeof parsed.html === 'string' ? parsed.html : '';
-      if (html.length > 0) {
+      let html = typeof parsed.html === 'string' ? parsed.html : '';
+
+      // Unescape literal \n, \r, \t sequences the model may embed in the JSON string value
+      if (html) {
+        html = html
+          .replace(/\\n/g, '\n')
+          .replace(/\\r/g, '\r')
+          .replace(/\\t/g, '\t')
+          .replace(/\\"/g, '"')
+          .trim();
+      }
+
+      // Only accept if it contains actual HTML markup — reject whitespace-only or near-empty strings
+      const hasRealHtml =
+        html.length > 200 &&
+        (/<html[\s>]/i.test(html) || /<!DOCTYPE\s+html/i.test(html)) &&
+        /<\/html>/i.test(html);
+
+      if (hasRealHtml) {
         return { title, takeaways, html };
       }
+
+      // html field was empty or truncated — log and fall through to regex strategies
+      console.warn(
+        `[parseGameOutput] JSON.parse succeeded but html field is empty/truncated (${html.length} chars). Falling through to regex extraction.`
+      );
     }
   } catch {
     // Fall through to regex or raw HTML parsing
   }
 
-  // Strategy 2: Direct raw HTML output from model
+  // ── Strategy 2: Direct raw HTML output from model ────────────────────────────
   if (
     cleaned.startsWith('<!DOCTYPE') ||
     cleaned.startsWith('<html') ||
@@ -102,12 +125,12 @@ export function parseGameOutput(rawText: string, fallbackTopic: string = 'Educat
     };
   }
 
-  // Strategy 3: Regex extraction for malformed/unescaped JSON fields
+  // ── Strategy 3: Regex extraction for malformed/unescaped JSON fields ─────────
   const titleMatch = rawText.match(/"title"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/i);
   const takeawaysMatch = rawText.match(/"takeaways"\s*:\s*\[([\s\S]*?)\]/i);
   const htmlMatch = rawText.match(/"html"\s*:\s*"([\s\S]*?)"\s*(?:,\s*"|\})/i);
 
-  let extractedTitle = titleMatch ? titleMatch[1].replace(/\\"/g, '"') : `${fallbackTopic} Simulation`;
+  const extractedTitle = titleMatch ? titleMatch[1].replace(/\\"/g, '"') : `${fallbackTopic} Simulation`;
   let extractedTakeaways: string[] = [];
 
   if (takeawaysMatch && takeawaysMatch[1]) {
@@ -129,8 +152,9 @@ export function parseGameOutput(rawText: string, fallbackTopic: string = 'Educat
       .replace(/\\r/g, '\r')
       .replace(/\\t/g, '\t');
   } else {
-    // If html wasn't matched in quotes, check if raw HTML is embedded anywhere in rawText
-    const embeddedHtml = rawText.match(/<!DOCTYPE\s+html[\s\S]*?<\/html>/i) ||
+    // If html wasn't found in quotes, check if raw HTML is embedded anywhere in rawText
+    const embeddedHtml =
+      rawText.match(/<!DOCTYPE\s+html[\s\S]*?<\/html>/i) ||
       rawText.match(/<html[\s\S]*?<\/html>/i);
     if (embeddedHtml) {
       extractedHtml = embeddedHtml[0];
@@ -194,7 +218,7 @@ export function validateGameHtml(rawHtml: string): ValidationResult {
 
   // 4. Zero external dependencies check: Ensure no external src or remote stylesheets/scripts/images
   const remoteDepMatch = sanitizedHtml.match(
-    /<(?:script|link|img|audio|video|source|iframe)[^>]*(?:src|href)=["'](?:https?:)?\/\/[^"']+["']/i
+    /<(?:script|link|img|audio|video|source|iframe)[^>]*(?:src|href)=['"](?:https?:)?\/\/[^'"]+['"]/i
   );
   if (remoteDepMatch) {
     return {
