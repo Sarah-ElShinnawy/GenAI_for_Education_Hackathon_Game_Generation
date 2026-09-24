@@ -114,11 +114,16 @@ export async function generateContentResiliently(
   const primary = options.model || getPrimaryModel();
   const candidateModels = Array.from(
     new Set([
-      'gemini-flash-lite-latest',
+      // ── Tier 1: 500 RPD Flash Lite models — exhaust these first ──────────
+      'gemini-flash-lite-latest',   // gemini-3.5-flash-lite alias, 500 RPD, ~20s per game
+      'gemini-3.5-flash-lite',      // explicit name, 500 RPD
+      'gemini-3.1-flash-lite',      // 500 RPD, near-zero usage
+      // ── Primary model override (if set, placed after lite tier) ───────────
       primary,
-      'gemini-2.5-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite',
+      // ── Tier 2: 20 RPD Flash models — use only when all Lite exhausted ───
+      'gemini-3.6-flash',           // 20 RPD, 13/20 used today
+      'gemini-3.8-flash',           // 20 RPD, 18/20 used today — nearly gone
+      'gemini-2.5-flash',           // 20 RPD, already OVER limit — last resort
     ])
   );
 
