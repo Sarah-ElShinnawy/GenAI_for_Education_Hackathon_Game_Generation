@@ -4,13 +4,33 @@ let cachedPrimaryClient: GoogleGenAI | null = null;
 let cachedSecondaryClient: GoogleGenAI | null = null;
 
 /**
+ * Resolves the Gemini API key from environment variables, supporting multiple aliases
+ * and stripping any accidental quotes pasted into deployment dashboards.
+ */
+export function getResolvedApiKey(): string | null {
+  const raw =
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+    process.env.GEMINI_KEY ||
+    process.env.GOOGLE_GENAI_API_KEY;
+
+  if (!raw) return null;
+  return raw.trim().replace(/^["']|["']$/g, '');
+}
+
+export function isGeminiKeyConfigured(): boolean {
+  return Boolean(getResolvedApiKey());
+}
+
+/**
  * Retrieves or initializes a GoogleGenAI SDK client.
  * If GEMINI_API_KEY_SECONDARY is configured in environment, dedicates
  * separate API keys to the Planner and Coder stages to double rate limits.
  */
 export function getGeminiClient(role: 'primary' | 'planner' | 'coder' = 'primary'): GoogleGenAI {
-  const primaryKey = process.env.GEMINI_API_KEY?.trim();
-  const secondaryKey = process.env.GEMINI_API_KEY_SECONDARY?.trim();
+  const primaryKey = getResolvedApiKey();
+  const secondaryKey = process.env.GEMINI_API_KEY_SECONDARY?.trim().replace(/^["']|["']$/g, '');
 
   if (!primaryKey) {
     throw new Error(
