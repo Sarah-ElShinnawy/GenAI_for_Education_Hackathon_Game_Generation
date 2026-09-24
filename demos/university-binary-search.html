@@ -1,0 +1,357 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Binary Search Algorithm Interactive Learning Quest</title><style>html, body { width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column; background: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; } #game-container { flex: 1 1 0%; width: 100%; height: 100%; position: relative; overflow: hidden; display: flex; flex-direction: column; }</style></head><body><div id="start-overlay" style="position:fixed; inset:0; background:rgba(15,23,42,0.95); z-index:1000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;"><div style="max-width:600px; background:#1e293b; border:3px solid #38bdf8; border-radius:24px; padding:40px; box-shadow:0 25px 50px rgba(0,0,0,0.6);"><div style="font-size:3.5rem; margin-bottom:12px;"><svg viewBox="0 0 100 100" width="80" height="80"><circle cx="50" cy="50" r="45" fill="url(#starGrad)"/><polygon points="50,15 61,35 83,38 67,54 71,76 50,65 29,76 33,54 17,38 39,35" fill="#fef08a"/></svg></div><h1 style="color:#38bdf8; margin:0 0 16px 0; font-size:2.2rem;">Binary Search Algorithm Quest</h1><p style="color:#cbd5e1; font-size:1.1rem; line-height:1.6; margin-bottom:28px;">Welcome! Join Guide Spark to explore how divide-and-conquer algorithms efficiently locate data in sorted arrays with logarithmic time complexity.</p><button id="start-btn" onclick="startGame()" style="background:linear-gradient(135deg, #3b82f6, #2563eb); color:#fff; border:none; padding:16px 36px; border-radius:14px; font-weight:bold; font-size:1.2rem; cursor:pointer; box-shadow:0 10px 20px rgba(59,130,246,0.4); transition:all 0.2s;">Start Playing ➔</button></div></div><div style="display:flex; justify-content:space-between; align-items:center; padding:12px 24px; background:#1e293b; border-bottom:2px solid #334155; height:64px; box-sizing:border-box; z-index:10;"><div style="display:flex; align-items:center; gap:16px;"><span id="stage-indicator" style="background:#3b82f6; color:#fff; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.9rem; letter-spacing:0.05em;">STAGE 1 / 3</span><h2 id="game-title" style="margin:0; font-size:1.2rem; color:#f8fafc; font-weight:600;">Foundations</h2><span id="stage-title" style="display:none;"></span></div><div style="display:flex; align-items:center; gap:16px;"><button id="restart-btn" style="background:#334155; color:#cbd5e1; border:none; padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer;">Restart Stage</button><button id="help-btn" style="background:#334155; color:#cbd5e1; border:none; padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer;">How to Play</button></div></div><div id="game-container" style="display:flex; flex-direction:column; padding:24px; box-sizing:border-box; align-items:center; justify-content:space-between; max-width:1200px; margin:0 auto; width:100%;"></div><div style="background:#1e293b; border-top:2px solid #334155; padding:16px 24px; display:flex; align-items:center; gap:20px; min-height:88px; box-sizing:border-box; z-index:10; width:100%; max-width:1200px; margin:0 auto; border-radius:16px 16px 0 0; box-shadow:0 -10px 25px rgba(0,0,0,0.3);"><div style="width:64px; height:64px; flex-shrink:0; background:radial-gradient(circle, #38bdf8 0%, #0284c7 100%); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; box-shadow:0 0 15px rgba(56,189,248,0.5);"><svg viewBox="0 0 100 100" width="48" height="48"><circle cx="50" cy="50" r="45" fill="url(#sparkGrad)"/><polygon points="50,15 61,35 83,38 67,54 71,76 50,65 29,76 33,54 17,38 39,35" fill="#fef08a"/></svg></div><div style="flex:1; display:flex; flex-direction:column; justify-content:center;"><div style="font-size:0.8rem; font-weight:800; color:#38bdf8; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:2px;">Guide Spark</div><div id="mentor-text" style="font-size:1.05rem; color:#f8fafc; line-height:1.4;">Welcome! Click start to begin our journey into Binary Search.</div></div></div><div id="what-changed-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:500; align-items:center; justify-content:center;"><div style="background:#1e293b; border:3px solid #38bdf8; border-radius:20px; padding:32px; width:min(90%, 540px); text-align:center; box-shadow:0 25px 50px rgba(0,0,0,0.6);"><div style="font-size:0.85rem; font-weight:800; color:#38bdf8; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px;">🔬 SYSTEM TRANSITION</div><h2 id="what-changed-title" style="margin:0 0 12px 0; color:#f8fafc; font-size:1.6rem;"></h2><p id="what-changed-text" style="color:#cbd5e1; font-size:1.05rem; line-height:1.5; margin:0 0 24px 0;"></p><button id="what-changed-continue-btn" disabled style="background:#3b82f6; color:#fff; border:none; padding:14px 28px; border-radius:12px; font-weight:bold; font-size:1.05rem; cursor:pointer; opacity:0.6; transition:all 0.2s; box-shadow:0 4px 12px rgba(59,130,246,0.3);">Continue (5s)</button></div></div><div id="help-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:500; align-items:center; justify-content:center;"><div style="background:#1e293b; border:3px solid #38bdf8; border-radius:20px; padding:32px; width:min(90%, 540px); text-align:left; box-shadow:0 25px 50px rgba(0,0,0,0.6);"><div style="font-size:0.85rem; font-weight:800; color:#38bdf8; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px;">📖 HOW TO PLAY</div><h2 style="margin:0 0 16px 0; color:#f8fafc; font-size:1.6rem;">Binary Search Rules</h2><ul style="color:#cbd5e1; font-size:1.05rem; line-height:1.6; padding-left:20px; margin:0 0 28px 0;"><li style="margin-bottom:8px;">Stage 1: Identify sorted order properties and select the midpoint element.</li><li style="margin-bottom:8px;">Stage 2: Compare target values and eliminate half the search space.</li><li style="margin-bottom:8px;">Stage 3: Execute complete logarithmic searches to master the algorithm.</li></ul><button id="close-help-btn" style="background:#3b82f6; color:#fff; border:none; padding:12px 24px; border-radius:10px; font-weight:bold; font-size:1rem; cursor:pointer; width:100%;">Got It, Resume Quest</button></div></div><svg width="0" height="0" style="position:absolute;"><defs><linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0284c7"/></linearGradient><linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#1d4ed8"/></linearGradient></defs></svg><script>
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  } else if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+function playSound(type) {
+  if (!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    if (type === 'click') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    } else if (type === 'success') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.setValueAtTime(659.25, now + 0.1);
+      osc.frequency.setValueAtTime(783.99, now + 0.2);
+      osc.frequency.setValueAtTime(1046.50, now + 0.3);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+      osc.start(now);
+      osc.stop(now + 0.5);
+    } else if (type === 'error') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.setValueAtTime(150, now + 0.15);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    }
+  } catch(e) {}
+}
+
+let currentStage = 1;
+let stageData = {};
+
+function startGame() {
+  initAudio();
+  const overlay = document.getElementById('start-overlay');
+  if (overlay) overlay.style.display = 'none';
+  loadStage(1);
+}
+window.startGame = startGame;
+document.getElementById('start-btn')?.addEventListener('click', startGame);
+
+document.getElementById('restart-btn')?.addEventListener('click', () => {
+  playSound('click');
+  loadStage(currentStage);
+});
+
+document.getElementById('help-btn')?.addEventListener('click', () => {
+  playSound('click');
+  document.getElementById('help-modal').style.display = 'flex';
+});
+
+document.getElementById('close-help-btn')?.addEventListener('click', () => {
+  playSound('click');
+  document.getElementById('help-modal').style.display = 'none';
+});
+
+function showWhatChangedModal(title, text, nextCallback) {
+  const modal = document.getElementById('what-changed-modal');
+  const titleEl = document.getElementById('what-changed-title');
+  const textEl = document.getElementById('what-changed-text');
+  const btn = document.getElementById('what-changed-continue-btn');
+  
+  titleEl.textContent = title;
+  textEl.textContent = text;
+  modal.style.display = 'flex';
+  
+  let countdown = 5;
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  btn.textContent = 'Continue (' + countdown + 's)';
+  
+  const timer = setInterval(() => {
+    countdown--;
+    if (countdown > 0) {
+      btn.textContent = 'Continue (' + countdown + 's)';
+    } else {
+      clearInterval(timer);
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.textContent = 'Continue to Next Stage ➔';
+    }
+  }, 1000);
+  
+  const newBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(newBtn, btn);
+  
+  if (countdown <= 0) {
+    newBtn.disabled = false;
+    newBtn.style.opacity = '1';
+  }
+  
+  newBtn.addEventListener('click', () => {
+    if (newBtn.disabled) return;
+    playSound('click');
+    modal.style.display = 'none';
+    if (nextCallback) nextCallback();
+  });
+}
+
+function loadStage(stageNum) {
+  currentStage = stageNum;
+  document.getElementById('stage-indicator').textContent = 'STAGE ' + stageNum + ' / 3';
+  const container = document.getElementById('game-container');
+  container.innerHTML = '';
+  
+  if (stageNum === 1) {
+    document.getElementById('game-title').textContent = 'Foundations: Sorted Array & Midpoint';
+    document.getElementById('mentor-text').textContent = 'Binary search requires a sorted collection. Click the exact middle element (midpoint) of the array below to inspect its index!';
+    loadStage1(container);
+  } else if (stageNum === 2) {
+    document.getElementById('game-title').textContent = 'Cause & Effect: Eliminating Halves';
+    document.getElementById('mentor-text').textContent = 'Target is 73. The midpoint value is 45. Since 73 > 45, eliminate the left half! Click the correct half to discard.';
+    loadStage2(container);
+  } else if (stageNum === 3) {
+    document.getElementById('stage-title');
+    document.getElementById('game-title').textContent = 'Synthesis: Complete Binary Search Mastery';
+    document.getElementById('mentor-text').textContent = 'Find target 88! Use Left, Mid, Right pointers and compare values until found.';
+    loadStage3(container);
+  }
+}
+
+function loadStage1(container) {
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; gap:30px;';
+  
+  const svgHeader = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svgHeader.setAttribute('viewBox', '0 0 600 160');
+  svgHeader.style.cssText = 'width:100%; max-width:600px; height:160px; filter:drop-shadow(0 10px 20px rgba(0,0,0,0.4));';
+  svgHeader.innerHTML = `
+    <defs>
+      <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#3b82f6"/>
+        <stop offset="100%" stop-color="#1d4ed8"/>
+      </linearGradient>
+      <linearGradient id="targetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#10b981"/>
+        <stop offset="100%" stop-color="#047857"/>
+      </linearGradient>
+    </defs>
+    <rect x="10" y="10" width="580" height="140" rx="20" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+    <text x="300" y="45" text-anchor="middle" fill="#38bdf8" font-size="18" font-weight="bold">Sorted Array Index Inspection</text>
+    <text x="300" y="75" text-anchor="middle" fill="#cbd5e1" font-size="14">Indices: 0 to 6 (Total 7 elements). Midpoint index = Math.floor((0 + 6) / 2) = 3.</text>
+    <text x="300" y="110" text-anchor="middle" fill="#f59e0b" font-size="15" font-weight="bold">Find index 3 (element value 42)!</text>
+  `;
+  wrapper.appendChild(svgHeader);
+  
+  const arrayContainer = document.createElement('div');
+  arrayContainer.style.cssText = 'display:flex; gap:12px; justify-content:center; align-items:center; flex-wrap:wrap;';
+  
+  const values = [12, 25, 34, 42, 58, 71, 89];
+  values.forEach((val, idx) => {
+    const node = document.createElement('div');
+    node.style.cssText = 'width:70px; height:85px; background:' + (idx === 3 ? '#334155' : '#1e293b') + '; border:3px solid ' + (idx === 3 ? '#38bdf8' : '#475569') + '; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; box-shadow:0 8px 16px rgba(0,0,0,0.3);';
+    node.innerHTML = `
+      <span style="font-size:0.75rem; color:#94a3b8; font-weight:bold; margin-bottom:4px;">idx ${idx}</span>
+      <span style="font-size:1.4rem; color:#f8fafc; font-weight:bold;">${val}</span>
+    `;
+    node.addEventListener('mouseover', () => { node.style.transform = 'translateY(-6px)'; node.style.borderColor = '#38bdf8'; });
+    node.addEventListener('mouseout', () => { node.style.transform = 'translateY(0)'; node.style.borderColor = idx === 3 ? '#38bdf8' : '#475569'; });
+    node.addEventListener('click', () => {
+      if (idx === 3) {
+        playSound('success');
+        showWhatChangedModal(
+          'Stage 1 Completed!',
+          'Great! You discovered the key ingredients of Binary Search Algorithm. The foundation for Binary Search Algorithm is now active and ready for the next step.',
+          () => loadStage(2)
+        );
+      } else {
+        playSound('error');
+        node.style.borderColor = '#ef4444';
+        document.getElementById('mentor-text').textContent = 'Index ' + idx + ' value is ' + val + '. Remember, midpoint is index 3 ((0+6)/2)! Try again.';
+        setTimeout(() => { node.style.borderColor = '#475569'; }, 600);
+      }
+    });
+    arrayContainer.appendChild(node);
+  });
+  
+  wrapper.appendChild(arrayContainer);
+  container.appendChild(wrapper);
+}
+
+function loadStage2(container) {
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; gap:24px;';
+  
+  const promptBox = document.createElement('div');
+  promptBox.style.cssText = 'background:#1e293b; border:2px solid #334155; padding:20px 30px; border-radius:16px; text-align:center; max-width:650px;';
+  promptBox.innerHTML = `
+    <h3 style="margin:0 0 8px 0; color:#38bdf8; font-size:1.2rem;">Target Query: <span style="color:#10b981;">73</span></h3>
+    <p style="margin:0; color:#cbd5e1; font-size:1rem;">Current Midpoint Value = <strong style="color:#f8fafc;">45</strong> at Index 3.<br>Since <span style="color:#f59e0b;">73 > 45</span>, all numbers to the left (including 45) are too small!<br><strong>Which half should we eliminate?</strong></p>
+  `;
+  wrapper.appendChild(promptBox);
+  
+  const actionRow = document.createElement('div');
+  actionRow.style.cssText = 'display:flex; gap:24px; justify-content:center;';
+  
+  const leftBtn = document.createElement('button');
+  leftBtn.style.cssText = 'background:#dc2626; color:#fff; border:none; padding:16px 28px; border-radius:12px; font-weight:bold; font-size:1.1rem; cursor:pointer; box-shadow:0 8px 20px rgba(220,38,38,0.3); transition:all 0.2s;';
+  leftBtn.textContent = '❌ Eliminate Left Half ([12, 25, 34, 45])';
+  leftBtn.addEventListener('click', () => {
+    playSound('success');
+    showWhatChangedModal(
+      'Stage 2 Completed!',
+      'Notice how each component directly impacts the outcome in Binary Search Algorithm. Energy and material transitioned into the active reaction phase!',
+      () => loadStage(3)
+    );
+  });
+  
+  const rightBtn = document.createElement('button');
+  rightBtn.style.cssText = 'background:#334155; color:#cbd5e1; border:none; padding:16px 28px; border-radius:12px; font-weight:bold; font-size:1.1rem; cursor:pointer; transition:all 0.2s;';
+  rightBtn.textContent = 'Keep Left Half ([58, 71, 89])';
+  rightBtn.addEventListener('click', () => {
+    playSound('error');
+    document.getElementById('mentor-text').textContent = 'Since 73 is greater than 45, the target cannot be in the left half! We eliminate the left half.';
+  });
+  
+  actionRow.appendChild(leftBtn);
+  actionRow.appendChild(rightBtn);
+  wrapper.appendChild(actionRow);
+  
+  const arrayView = document.createElement('div');
+  arrayView.style.cssText = 'display:flex; gap:10px; justify-content:center;';
+  [12, 25, 34, 45, 58, 71, 89].forEach((v, i) => {
+    const item = document.createElement('div');
+    item.style.cssText = 'width:54px; height:64px; background:' + (i <= 3 ? '#7f1d1d' : '#1e293b') + '; border:2px solid ' + (i <= 3 ? '#ef4444' : '#38bdf8') + '; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:' + (i <= 3 ? '0.5' : '1') + ';';
+    item.innerHTML = '<span style="font-size:0.65rem; color:#94a3b8;">' + i + '</span><span style="font-size:1.1rem; font-weight:bold; color:#f8fafc;">' + v + '</span>';
+    arrayView.appendChild(item);
+  });
+  wrapper.appendChild(arrayView);
+  
+  container.appendChild(wrapper);
+}
+
+function loadStage3(container) {
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; gap:20px;';
+  
+  const state = {
+    arr: [11, 22, 33, 44, 55, 66, 77, 88, 99],
+    target: 88,
+    left: 0,
+    right: 8,
+    mid: 4
+  };
+  
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#1e293b; border:2px solid #334155; padding:20px; border-radius:16px; text-align:center; max-width:700px; width:100%;';
+  box.innerHTML = `
+    <h3 style="margin:0 0 8px 0; color:#38bdf8;">Target Value: <span style="color:#10b981; font-size:1.4rem;">${state.target}</span></h3>
+    <p id="s3-status" style="margin:0; color:#cbd5e1;">Active Range: Index <span id="s3-l">${state.left}</span> to <span id="s3-r">${state.right}</span>. Current Mid Index: <span id="s3-m" style="color:#f59e0b; font-weight:bold;">${state.mid}</span> (${state.arr[state.mid]})</p>
+  `;
+  wrapper.appendChild(box);
+  
+  const arrContainer = document.createElement('div');
+  arrContainer.id = 's3-arr-container';
+  arrContainer.style.cssText = 'display:flex; gap:10px; justify-content:center; flex-wrap:wrap;';
+  
+  function renderArr() {
+    arrContainer.innerHTML = '';
+    state.arr.forEach((val, idx) => {
+      const isActive = idx >= state.left && idx <= state.right;
+      const isMid = idx === state.mid;
+      const card = document.createElement('div');
+      card.style.cssText = 'width:64px; height:80px; background:' + (isMid ? '#3b82f6' : (isActive ? '#1e293b' : '#0f172a')) + '; border:3px solid ' + (isMid ? '#f59e0b' : (isActive ? '#38bdf8' : '#334155')) + '; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:' + (isActive ? '1' : '0.3') + '; cursor:' + (isMid ? 'pointer' : 'default') + '; box-shadow:0 6px 15px rgba(0,0,0,0.3); transition:all 0.2s;';
+      card.innerHTML = `
+        <span style="font-size:0.7rem; color:#94a3b8; font-weight:bold;">i:${idx}</span>
+        <span style="font-size:1.2rem; color:#f8fafc; font-weight:bold;">${val}</span>
+        ` + (isMid ? '<span style="font-size:0.6rem; color:#f59e0b; font-weight:bold;">MID</span>' : '') + `
+      `;
+      arrContainer.appendChild(card);
+    });
+  }
+  renderArr();
+  wrapper.appendChild(arrContainer);
+  
+  const controls = document.createElement('div');
+  controls.style.cssText = 'display:flex; gap:16px;';
+  
+  const btnMatch = document.createElement('button');
+  btnMatch.style.cssText = 'background:#10b981; color:#fff; border:none; padding:14px 24px; border-radius:10px; font-weight:bold; cursor:pointer;';
+  btnMatch.textContent = '🎯 Target Equals Mid (88 == 55?)';
+  
+  const btnGreater = document.createElement('button');
+  btnGreater.style.cssText = 'background:#3b82f6; color:#fff; border:none; padding:14px 24px; border-radius:10px; font-weight:bold; cursor:pointer;';
+  btnGreater.textContent = '📈 Target > Mid (88 > 55) ➔ Move Left to Mid+1';
+  
+  const btnLess = document.createElement('button');
+  btnLess.style.cssText = 'background:#ef4444; color:#fff; border:none; padding:14px 24px; border-radius:10px; font-weight:bold; cursor:pointer;';
+  btnLess.textContent = '📉 Target < Mid ➔ Move Right to Mid-1';
+  
+  btnMatch.addEventListener('click', () => {
+    if (state.arr[state.mid] === state.target) {
+      playSound('success');
+      showWhatChangedModal(
+        'Quest Completed! 🎉',
+        'Wonderful! You mastered the complete cycle of Binary Search Algorithm! The complete transformation is finished and new outputs were produced!',
+        () => {
+          document.getElementById('mentor-text').textContent = 'Congratulations! You have completed all stages of the Binary Search Algorithm Quest!';
+        }
+      );
+    } else {
+      playSound('error');
+      document.getElementById('mentor-text').textContent = 'Mid value is ' + state.arr[state.mid] + ', not 88! Since 88 > 55, click Target > Mid.';
+    }
+  });
+  
+  btnGreater.addEventListener('click', () => {
+    if (state.arr[state.mid] < state.target) {
+      playSound('click');
+      state.left = state.mid + 1;
+      state.mid = Math.floor((state.left + state.right) / 2);
+      document.getElementById('s3-l').textContent = state.left;
+      document.getElementById('s3-m').textContent = state.mid;
+      document.getElementById('s3-r').textContent = state.right;
+      renderArr();
+      if (state.arr[state.mid] === state.target) {
+        document.getElementById('mentor-text').textContent = 'Mid is now index ' + state.mid + ' (' + state.arr[state.mid] + '). It matches the target 88! Click Target Equals Mid to finish!';
+      } else {
+        document.getElementById('mentor-text').textContent = 'Range updated to [' + state.left + ', ' + state.right + ']. New mid is ' + state.arr[state.mid] + '.';
+      }
+    } else {
+      playSound('error');
+      document.getElementById('mentor-text').textContent = 'Target is not greater than mid here.';
+    }
+  });
+  
+  btnLess.addEventListener('click', () => {
+    playSound('error');
+    document.getElementById('mentor-text').textContent = 'Target 88 is greater than 55, so we move Left up, not Right down!';
+  });
+  
+  controls.appendChild(btnMatch);
+  controls.appendChild(btnGreater);
+  controls.appendChild(btnLess);
+  wrapper.appendChild(controls);
+  
+  container.appendChild(wrapper);
+}
+</script></body></html>

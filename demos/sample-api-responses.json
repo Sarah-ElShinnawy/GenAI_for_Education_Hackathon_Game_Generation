@@ -1,0 +1,41 @@
+[
+  {
+    "level": "elementary",
+    "topic": "Photosynthesis",
+    "title": "Sprout's Happy Sunshine Snack!",
+    "mentor": "🐝 Daisy the Bee",
+    "conceptExplanation": "Plants are living creatures that make their own food! They drink water from the soil, catch sunlight with their bright green leaves, and breathe in air to grow big and strong.",
+    "takeaways": [
+      "Plants make their own food using water, sunlight, and air in a process called photosynthesis.",
+      "Roots drink water from the ground, while leaves catch sunshine from the sky.",
+      "Healthy plants give us clean air to breathe and beautiful flowers to look at!"
+    ],
+    "htmlFile": "elementary-photosynthesis.html"
+  },
+  {
+    "level": "high_school",
+    "topic": "Projectile Motion",
+    "title": "Arc Masters: Trajectory Playground",
+    "mentor": "🧑‍🔬 Professor Pip",
+    "conceptExplanation": "Projectile motion is the predictable curved path an object takes when launched through the air, shaped by the constant pull of gravity acting downwards and constant forward velocity.",
+    "takeaways": [
+      "Projectile motion combines independent horizontal motion (constant speed) and vertical motion (accelerated by gravity).",
+      "A 45-degree launch angle generally achieves maximum range in a vacuum, though real-world conditions require tuning.",
+      "The trajectory of any projectile in a uniform gravitational field forms a symmetrical parabola."
+    ],
+    "htmlFile": "high-school-projectile-motion.html"
+  },
+  {
+    "level": "university",
+    "topic": "Binary Search Algorithm",
+    "title": "Binary Search Algorithm Interactive Learning Quest",
+    "mentor": "🌟 Guide Spark",
+    "conceptExplanation": "Discover and experiment with the core principles of Binary Search Algorithm through interactive steps.",
+    "takeaways": [
+      "Understand the fundamental logarithmic efficiency of Binary Search ($O(\\log n)$)",
+      "Observe how narrowing the search space by half eliminates unneeded data instantly",
+      "Learn through guided, stress-free experimentation with sorted arrays and target queries"
+    ],
+    "htmlFile": "university-binary-search.html"
+  }
+]

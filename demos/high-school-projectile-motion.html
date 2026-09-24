@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Arc Masters: Trajectory Playground</title>
+<style>
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #0f172a;
+    color: #f8fafc;
+    font-family: system-ui, sans-serif;
+  }
+  #game-container {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #1e293b 0%, #0f172a 100%);
+  }
+  #start-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  #start-btn {
+    padding: 16px 32px;
+    font-size: 24px;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  #start-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 15px 30px rgba(59, 130, 246, 0.7);
+  }
+  #hud {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 5;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    pointer-events: none;
+  }
+  svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+</style>
+</head>
+<body>
+<div id="game-container">
+  <div id="start-overlay">
+    <h1>Arc Masters: Trajectory Playground</h1>
+    <p>Click and drag to aim your launcher. Release to fire!</p>
+    <button id="start-btn" onclick="startGame()">Start Game</button>
+  </div>
+  <div id="hud">Score: <span id="score-val">0</span> | Shots: <span id="shots-val">5</span></div>
+  
+  <svg id="game-svg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="bg-sky" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#1e293b"/>
+        <stop offset="100%" stop-color="#0f172a"/>
+      </linearGradient>
+      <linearGradient id="ground-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#10b981"/>
+        <stop offset="100%" stop-color="#047857"/>
+      </linearGradient>
+      <linearGradient id="cannon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#64748b"/>
+        <stop offset="100%" stop-color="#334155"/>
+      </linearGradient>
+      <linearGradient id="projectile-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f59e0b"/>
+        <stop offset="100%" stop-color="#d97706"/>
+      </linearGradient>
+      <linearGradient id="target-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ef4444"/>
+        <stop offset="100%" stop-color="#b91c1c"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Background Environment -->
+    <rect width="1000" height="600" fill="url(#bg-sky)"/>
+    
+    <!-- Environment Elements / Mountains -->
+    <path d="M0 500 L150 350 L300 500 Z" fill="#334155" opacity="0.4"/>
+    <path d="M200 500 L400 280 L600 500 Z" fill="#334155" opacity="0.6"/>
+    <path d="M500 500 L750 200 L1000 500 Z" fill="#334155" opacity="0.5"/>
+
+    <!-- Ground -->
+    <rect x="0" y="500" width="1000" height="100" fill="url(#ground-grad)"/>
+
+    <!-- Cannon / Character Vector Illustration -->
+    <g id="launcher" transform="translate(150, 480)">
+      <!-- Wheels -->
+      <circle cx="-15" cy="20" r="14" fill="#0f172a" stroke="#cbd5e1" stroke-width="4"/>
+      <circle cx="15" cy="20" r="14" fill="#0f172a" stroke="#cbd5e1" stroke-width="4"/>
+      <!-- Base Chassis -->
+      <rect x="-25" y="0" width="50" height="20" rx="5" fill="#475569"/>
+      <!-- Barrel group (rotated dynamically via JS if needed) -->
+      <g id="barrel-group">
+        <rect x="0" y="-12" width="60" height="24" rx="4" fill="url(#cannon-grad)"/>
+        <circle cx="60" cy="0" r="6" fill="#94a3b8"/>
+      </g>
+    </g>
+
+    <!-- Trajectory Guide -->
+    <path id="trajectory-line" d="" fill="none" stroke="#38bdf8" stroke-width="4" stroke-dasharray="8,8" opacity="0.7"/>
+
+    <!-- Active Projectile -->
+    <g id="projectile-node" transform="translate(-100, -100)">
+      <circle cx="0" cy="0" r="12" fill="url(#projectile-grad)" stroke="#fff" stroke-width="2"/>
+      <path d="M -16 0 L -8 -6 L -8 6 Z" fill="#fbbf24"/>
+    </g>
+
+    <!-- Target Vector Illustration -->
+    <g id="target-node" transform="translate(750, 440)">
+      <rect x="-6" y="0" width="12" height="60" fill="#64748b"/>
+      <path d="M 0 -20 L 40 0 L 0 20 Z" fill="url(#target-grad)" stroke="#fff" stroke-width="2"/>
+      <circle cx="0" cy="0" r="6" fill="#fef08a"/>
+    </g>
+  </svg>
+</div>
+
+<script>
+  const gameState = {
+    active: false,
+    score: 0,
+    shots: 5,
+    launcherX: 150,
+    launcherY: 480,
+    targetX: 750,
+    targetY: 440,
+    projX: -100,
+    projY: -100,
+    vx: 0,
+    vy: 0,
+    gravity: 0.5,
+    isDragging: false,
+    dragStartX: 150,
+    dragStartY: 480,
+    dragCurrentX: 150,
+    dragCurrentY: 480
+  };
+
+  function startGame() {
+    const overlay = document.getElementById('start-overlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
+    gameState.active = true;
+    resetTarget();
+    updateHUD();
+    requestAnimationFrame(gameLoop);
+  }
+
+  function resetTarget() {
+    gameState.targetX = 500 + Math.random() * 400;
+    gameState.targetY = 250 + Math.random() * 180;
+    const targetNode = document.getElementById('target-node');
+    if (targetNode) {
+      targetNode.setAttribute('transform', 'translate(' + gameState.targetX + ', ' + gameState.targetY + ')');
+    }
+  }
+
+  function updateHUD() {
+    const scoreVal = document.getElementById('score-val');
+    const shotsVal = document.getElementById('shots-val');
+    if (scoreVal) scoreVal.textContent = gameState.score;
+    if (shotsVal) shotsVal.textContent = gameState.shots;
+  }
+
+  const container = document.getElementById('game-container');
+  const svg = document.getElementById('game-svg');
+
+  svg.addEventListener('pointerdown', (e) => {
+    if (!gameState.active) return;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const svgPoint = pt.matrixTransform(svg.getScreenCTM().inverse());
+    
+    // Check if clicking near launcher
+    const dx = svgPoint.x - gameState.launcherX;
+    const dy = svgPoint.y - gameState.launcherY;
+    if (Math.sqrt(dx*dx + dy*dy) < 80) {
+      gameState.isDragging = true;
+      gameState.dragStartX = svgPoint.x;
+      gameState.dragStartY = svgPoint.y;
+      gameState.dragCurrentX = svgPoint.x;
+      gameState.dragCurrentY = svgPoint.y;
+    }
+  });
+
+  svg.addEventListener('pointermove', (e) => {
+    if (!gameState.isDragging) return;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const svgPoint = pt.matrixTransform(svg.getScreenCTM().inverse());
+    gameState.dragCurrentX = svgPoint.x;
+    gameState.dragCurrentY = svgPoint.y;
+
+    // Update barrel rotation & trajectory preview
+    const pullX = gameState.launcherX - (gameState.dragCurrentX - gameState.dragStartX);
+    const pullY = gameState.launcherY - (gameState.dragCurrentY - gameState.dragStartY);
+    const angle = Math.atan2(pullY - gameState.launcherY, pullX - gameState.launcherX);
+    
+    const barrel = document.getElementById('barrel-group');
+    if (barrel) {
+      barrel.setAttribute('transform', 'rotate(' + (angle * 180 / Math.PI) + ')');
+    }
+
+    // Draw trajectory path preview
+    const launchVx = (gameState.launcherX - pullX) * 0.15;
+    const launchVy = (gameState.launcherY - pullY) * 0.15;
+    let pathStr = 'M ' + gameState.launcherX + ' ' + gameState.launcherY;
+    let simX = gameState.launcherX;
+    let simY = gameState.launcherY;
+    let simVx = launchVx;
+    let simVy = launchVy;
+
+    for (let i = 0; i < 30; i++) {
+      simX += simVx;
+      simY += simVy;
+      simVy += gameState.gravity;
+      pathStr += ' L ' + simX + ' ' + simY;
+      if (simY > 500) break;
+    }
+    const trajLine = document.getElementById('trajectory-line');
+    if (trajLine) trajLine.setAttribute('d', pathStr);
+  });
+
+  svg.addEventListener('pointerup', () => {
+    if (!gameState.isDragging) return;
+    gameState.isDragging = false;
+    
+    const pullX = gameState.launcherX - (gameState.dragCurrentX - gameState.dragStartX);
+    const pullY = gameState.launcherY - (gameState.dragCurrentY - gameState.dragStartY);
+    
+    gameState.vx = (gameState.launcherX - pullX) * 0.15;
+    gameState.vy = (gameState.launcherY - pullY) * 0.15;
+    gameState.projX = gameState.launcherX;
+    gameState.projY = gameState.launcherY;
+
+    const trajLine = document.getElementById('trajectory-line');
+    if (trajLine) trajLine.setAttribute('d', '');
+
+    gameState.shots--;
+    updateHUD();
+  });
+
+  function gameLoop() {
+    if (gameState.active) {
+      // Update projectile
+      if (gameState.projX > -50 && gameState.projX < 1050) {
+        gameState.projX += gameState.vx;
+        gameState.projY += gameState.vy;
+        gameState.vy += gameState.gravity;
+
+        // Check collision with target
+        const hitDx = gameState.projX - gameState.targetX;
+        const hitDy = gameState.projY - gameState.targetY;
+        if (Math.sqrt(hitDx*hitDx + hitDy*hitDy) < 30) {
+          gameState.score += 100;
+          updateHUD();
+          resetTarget();
+          gameState.projX = -100;
+          gameState.projY = -100;
+        }
+
+        // Ground collision
+        if (gameState.projY >= 500) {
+          gameState.projX = -100;
+          gameState.projY = -100;
+        }
+      }
+
+      const projNode = document.getElementById('projectile-node');
+      if (projNode) {
+        projNode.setAttribute('transform', 'translate(' + gameState.projX + ', ' + gameState.projY + ')');
+      }
+
+      // Check game over
+      if (gameState.shots <= 0 && gameState.projX < -50) {
+        const overlay = document.getElementById('start-overlay');
+        if (overlay) {
+          overlay.style.display = 'flex';
+          const h1 = overlay.querySelector('h1');
+          if (h1) h1.textContent = 'Game Over! Final Score: ' + gameState.score;
+          const btn = document.getElementById('start-btn');
+          if (btn) btn.textContent = 'Play Again';
+        }
+        gameState.score = 0;
+        gameState.shots = 5;
+        gameState.active = false;
+      }
+    }
+    requestAnimationFrame(gameLoop);
+  }
+
+  window.startGame = startGame;
+</script>
+</body>
+</html>
